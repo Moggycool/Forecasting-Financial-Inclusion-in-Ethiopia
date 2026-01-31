@@ -1,0 +1,11 @@
+record_id,category,indicator,indicator_code,observation_date,source_name,confidence
+EVT_0001,product_launch,Telebirr Launch,EVT_TELEBIRR,2021-05-17,Ethio Telecom,high
+EVT_0009,policy,NFIS-II Strategy Launch,EVT_NFIS2,2021-09-01,NBE,high
+EVT_0002,market_entry,Safaricom Ethiopia Commercial Launch,EVT_SAFARICOM,2022-08-01,News,high
+EVT_0003,product_launch,M-Pesa Ethiopia Launch,EVT_MPESA,2023-08-01,Safaricom,high
+EVT_0004,infrastructure,Fayda Digital ID Program Rollout,EVT_FAYDA,2024-01-01,NIDP,high
+EVT_0005,policy,Foreign Exchange Liberalization,EVT_FX_REFORM,2024-07-29,NBE,high
+EVT_0006,milestone,P2P Transaction Count Surpasses ATM,EVT_CROSSOVER,2024-10-01,EthSwitch,high
+EVT_0007,partnership,M-Pesa EthSwitch Integration,EVT_MPESA_INTEROP,2025-10-27,EthSwitch,high
+EVT_0010,pricing,Safaricom Ethiopia Price Increase,EVT_SAFCOM_PRICE,2025-12-15,News,high
+EVT_0008,infrastructure,EthioPay Instant Payment System Launch,EVT_ETHIOPAY,2025-12-18,NBE/EthSwitch,high
