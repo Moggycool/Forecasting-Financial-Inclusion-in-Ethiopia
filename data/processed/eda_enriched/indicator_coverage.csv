@@ -1,0 +1,20 @@
+indicator_code,indicator,n_obs,min_date,max_date
+ACC_OWNERSHIP,Account Ownership Rate,6,2014-12-31,2024-11-29
+ACC_FAYDA,Fayda Digital ID Enrollment,3,2024-08-15,2025-05-15
+ACC_4G_COV,4G Population Coverage,2,2023-06-30,2025-06-30
+ACC_MM_ACCOUNT,Mobile Money Account Rate,2,2021-12-31,2024-11-29
+GEN_GAP_ACC,Account Ownership Gender Gap,2,2021-12-31,2024-11-29
+USG_P2P_COUNT,P2P Transaction Count,2,2024-07-07,2025-07-07
+ACC_MOBILE_PEN,Mobile Subscription Penetration,1,2025-12-31,2025-12-31
+AFF_DATA_INCOME,Data Affordability Index,1,2024-12-31,2024-12-31
+GEN_GAP_MOBILE,Mobile Phone Gender Gap,1,2024-12-31,2024-12-31
+GEN_MM_SHARE,Female Mobile Money Account Share,1,2024-12-31,2024-12-31
+USG_ACTIVE_RATE,Mobile Money Activity Rate,1,2024-12-31,2024-12-31
+USG_ATM_COUNT,ATM Transaction Count,1,2025-07-07,2025-07-07
+USG_ATM_VALUE,ATM Transaction Value,1,2025-07-07,2025-07-07
+USG_CROSSOVER,P2P/ATM Crossover Ratio,1,2025-07-07,2025-07-07
+USG_MPESA_ACTIVE,M-Pesa 90-Day Active Users,1,2024-12-31,2024-12-31
+USG_MPESA_USERS,M-Pesa Registered Users,1,2024-12-31,2024-12-31
+USG_P2P_VALUE,P2P Transaction Value,1,2025-07-07,2025-07-07
+USG_TELEBIRR_USERS,Telebirr Registered Users,1,2025-06-30,2025-06-30
+USG_TELEBIRR_VALUE,Telebirr Transaction Value,1,2025-06-30,2025-06-30
