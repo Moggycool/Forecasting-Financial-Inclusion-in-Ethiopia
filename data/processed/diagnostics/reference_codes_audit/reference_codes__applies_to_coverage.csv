@@ -1,0 +1,9 @@
+field,n_rows,n_present,n_known_in_reference,n_checked_context,n_invalid_context,allowed_contexts_distinct
+category,43,10,10,10,0,1
+confidence,43,43,43,43,0,1
+gender,43,43,43,43,0,1
+location,43,43,43,43,0,1
+pillar,43,33,33,33,0,1
+record_type,43,43,43,0,0,1
+source_type,43,43,43,43,0,1
+value_type,43,43,43,43,0,1

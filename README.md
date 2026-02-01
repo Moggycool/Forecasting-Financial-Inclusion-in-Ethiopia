@@ -378,3 +378,24 @@ python scripts/run_exploration.py --in data/processed/ethiopia_fi_unified_data__
 
 **Project goal:**  
 Provide a clean, validated, and reproducible workflow for exploring Ethiopia’s financial inclusion indicators, events, and their potential impacts.
+
+## Reference Codes Validation (explicit use of reference_codes.xlsx)
+
+This project uses `data/raw/reference_codes.xlsx` as the codebook for categorical fields.
+We validate that dataset values match allowed codes and are used under the correct record_type
+context via the `applies_to` rules.
+
+We validate all categorical fields against `data/raw/reference_codes.xlsx` via
+`scripts/validate_reference_codes.py`, which writes audit outputs to `data/processed/diagnostics/`.
+
+Run:
+
+```bash
+
+python scripts/validate_reference_codes.py ^
+  --data data/processed/ethiopia_fi_unified_data__enriched.csv ^
+  --reference data/raw/reference_codes.xlsx ^
+  --out-dir data/processed/diagnostics ^
+  --fail-on-unknown
+  
+  ```

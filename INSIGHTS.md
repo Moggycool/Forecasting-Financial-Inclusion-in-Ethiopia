@@ -241,6 +241,13 @@ Direct comparisons can create misleading conclusions.
 
 ---
 
+### Code Validations
+
+**Codebook validation:** All categorical code fields (record_type, category, pillar, value_type, etc.) are validated against `reference_codes.xlsx`. Any violations are exported to
+`reference_codes__unknown_codes.csv` and `reference_codes__invalid_applies_to.csv`.
+
+- Validation against the NBE master codebook returned 0 unknown codes , 0 applies_to violations , and 0 reference duplicates across 43 rows . The audit summary ( reference_codes__summary.csv) lists validated fields as record_type,pillar,category,value_type,source_type,confidence,gender,location. The coverage artifact ( reference_codes__applies_to_coverage.csv) further demonstrates execution of record-type context checks (eg, pillar: 33 checked, 0 invalid; category: 10 checked, 0 invalid ), while record_typeis validated for allowed codes but correctly excluded from context checking (as it defines the context).
+
 ## Summary
 
 The unified dataset provides a **rich foundation for hybrid, event-aware forecasting and policy analysis**, but:
@@ -256,7 +263,7 @@ Careful preprocessing, stratification, and uncertainty-aware modeling are requir
 
 **Tip:** Re-run the pipeline anytime new enrichment or raw data is added:
 
-```
+```text
 python scripts/apply_enrichment.py ...
 python scripts/run_exploration.py ...
 ```
