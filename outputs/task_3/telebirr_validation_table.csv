@@ -1,0 +1,4 @@
+indicator_code,obs_year_a,obs_year_b,obs_a,obs_b,obs_delta_pp,pred_telebirr_saturated_pp,residual_pp,n_telebirr_links,telebirr_link_targets,n_telebirr_links_all_targets
+ACC_OWNERSHIP,2021,2024,46.0,49.0,3.0,15.0,-12.0,1,"ACC_OWNERSHIP, USG_P2P_COUNT, USG_TELEBIRR_USERS",3
+USG_P2P_COUNT,2021,2024,,49700000.0,,25.0,,1,"ACC_OWNERSHIP, USG_P2P_COUNT, USG_TELEBIRR_USERS",3
+USG_TELEBIRR_USERS,2021,2024,,,,0.0,,1,"ACC_OWNERSHIP, USG_P2P_COUNT, USG_TELEBIRR_USERS",3

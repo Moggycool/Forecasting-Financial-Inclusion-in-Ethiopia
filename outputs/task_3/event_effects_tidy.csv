@@ -1,0 +1,16 @@
+event_record_id,event_name,indicator_code,year,effect_pp,shape,lag_months
+EVT_0001,Telebirr Launch,ACC_OWNERSHIP,2011,0.0,ramp,12.0
+EVT_0001,Telebirr Launch,ACC_OWNERSHIP,2014,0.0,ramp,12.0
+EVT_0001,Telebirr Launch,ACC_OWNERSHIP,2017,0.0,ramp,12.0
+EVT_0001,Telebirr Launch,ACC_OWNERSHIP,2021,0.0,ramp,12.0
+EVT_0001,Telebirr Launch,ACC_OWNERSHIP,2024,10.0,ramp,12.0
+EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,2011,0.0,ramp,6.0
+EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,2014,0.0,ramp,6.0
+EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,2017,0.0,ramp,6.0
+EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,2021,0.0,ramp,6.0
+EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,2024,0.8333333333333333,ramp,6.0
+EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,2011,0.0,ramp,24.0
+EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,2014,0.0,ramp,24.0
+EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,2017,0.0,ramp,24.0
+EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,2021,0.0,ramp,24.0
+EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,2024,0.0,ramp,24.0
