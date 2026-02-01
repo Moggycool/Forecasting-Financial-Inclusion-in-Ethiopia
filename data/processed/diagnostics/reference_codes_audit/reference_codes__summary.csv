@@ -1,0 +1,6 @@
+metric,value
+n_rows,43
+n_unknown_codes,0
+n_invalid_applies_to,0
+n_reference_duplicates,0
+validated_fields,"record_type,pillar,category,value_type,source_type,confidence,gender,location"
