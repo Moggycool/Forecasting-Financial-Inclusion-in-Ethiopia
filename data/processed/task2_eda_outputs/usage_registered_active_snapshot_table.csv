@@ -1,0 +1,5 @@
+indicator_code,indicator,observation_date,year,value_numeric,unit,source_name,confidence
+usg_active_rate,Mobile Money Activity Rate,2024-12-31,2024,66.0,%,Calculated,high
+usg_mpesa_active,M-Pesa 90-Day Active Users,2024-12-31,2024,7100000.0,users,Safaricom Results,high
+usg_mpesa_users,M-Pesa Registered Users,2024-12-31,2024,10800000.0,users,Safaricom Results,high
+usg_telebirr_users,Telebirr Registered Users,2025-06-30,2025,54840000.0,users,Ethio Telecom Report,high

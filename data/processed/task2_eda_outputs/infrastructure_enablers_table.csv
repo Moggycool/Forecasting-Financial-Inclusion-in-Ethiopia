@@ -1,0 +1,8 @@
+indicator_code,indicator,year,value_numeric,unit
+acc_4g_cov,4G Population Coverage,2023,37.5,%
+acc_4g_cov,4G Population Coverage,2025,70.8,%
+acc_fayda,Fayda Digital ID Enrollment,2024,8000000.0,people
+acc_fayda,Fayda Digital ID Enrollment,2025,12000000.0,people
+acc_fayda,Fayda Digital ID Enrollment,2025,15000000.0,people
+acc_mobile_pen,Mobile Subscription Penetration,2025,61.4,%
+aff_data_income,Data Affordability Index,2024,2.0,% of GNI

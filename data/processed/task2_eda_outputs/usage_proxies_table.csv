@@ -1,0 +1,7 @@
+indicator_code,indicator,year,value_numeric,unit
+usg_atm_count,ATM Transaction Count,2025,119300000.0,transactions
+usg_atm_value,ATM Transaction Value,2025,156000000000.0,ETB
+usg_crossover,P2P/ATM Crossover Ratio,2025,1.08,ratio
+usg_p2p_count,P2P Transaction Count,2024,49700000.0,transactions
+usg_p2p_count,P2P Transaction Count,2025,128300000.0,transactions
+usg_p2p_value,P2P Transaction Value,2025,578000000000.0,ETB

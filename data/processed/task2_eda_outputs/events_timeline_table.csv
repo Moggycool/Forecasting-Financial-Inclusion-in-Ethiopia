@@ -1,0 +1,11 @@
+record_id,indicator,indicator_code,event_date,source_name,source_url
+EVT_0001,Telebirr Launch,evt_telebirr,2021-05-17,Ethio Telecom,https://www.ethiotelecom.et/
+EVT_0009,NFIS-II Strategy Launch,evt_nfis2,2021-09-01,NBE,https://nbe.gov.et/
+EVT_0002,Safaricom Ethiopia Commercial Launch,evt_safaricom,2022-08-01,News,
+EVT_0003,M-Pesa Ethiopia Launch,evt_mpesa,2023-08-01,Safaricom,
+EVT_0004,Fayda Digital ID Program Rollout,evt_fayda,2024-01-01,NIDP,https://www.id.gov.et/
+EVT_0005,Foreign Exchange Liberalization,evt_fx_reform,2024-07-29,NBE,
+EVT_0006,P2P Transaction Count Surpasses ATM,evt_crossover,2024-10-01,EthSwitch,https://ethswitch.com/
+EVT_0007,M-Pesa EthSwitch Integration,evt_mpesa_interop,2025-10-27,EthSwitch,
+EVT_0010,Safaricom Ethiopia Price Increase,evt_safcom_price,2025-12-15,News,
+EVT_0008,EthioPay Instant Payment System Launch,evt_ethiopay,2025-12-18,NBE/EthSwitch,
