@@ -60,7 +60,7 @@ pip install -r requirements.txt
 
 ## Project Tree
 
-```
+```text
 
 Forecasting-Financial-Inclusion-in-Ethiopia
 ├─ dashboard
@@ -228,7 +228,7 @@ data/enrichment/new_records.yaml
 
 ### Outputs
 
-```
+```text
 data/processed/ethiopia_fi_unified_data__enriched.csv
 data/processed/diagnostics/*.csv
 ```

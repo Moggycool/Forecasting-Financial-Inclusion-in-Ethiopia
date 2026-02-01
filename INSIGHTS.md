@@ -10,21 +10,17 @@ All claims are backed by tables located in:
 
 ## Insight 1 — Multi-Typed Dataset Enables Hybrid Modeling
 
-### Claim
-
-The dataset supports a **hybrid modeling approach** rather than a single-type panel.  
+**Claim:** The dataset supports a **hybrid modeling approach** rather than a single-type panel.  
 It combines observations, events, impact links, and targets within one unified structure.
 
-### Evidence
+**Evidence:**
 
 - `counts__record_type.csv` → multiple `record_type` categories  
 - `events.csv` → event records present  
 - `impact_links.csv` → causal relationship records  
 - `temporal_range__targets.csv` → target records (if present)
 
-### Interpretation
-
-The structure naturally supports a **multi-layer modeling strategy**:
+**Interpretation:** The structure naturally supports a **multi-layer modeling strategy**:
 
 | Layer | Purpose |
 |----------|------------------------------|
@@ -40,28 +36,22 @@ This enables:
 - policy impact analysis  
 - goal-oriented evaluation  
 
-### Confidence
-
-**High** — directly verified by record counts and exported tables.
+**Confidence:** **High** — directly verified by record counts and exported tables.
 
 ---
 
 ## Insight 2 — Temporal Coverage Differs by Record Type
 
-### Claim
+**Claim:** Observation, event, and target records may cover **different time spans**, limiting backtesting and causal attribution.
 
-- Observation, event, and target records may cover **different time spans**, limiting backtesting and causal attribution.
-
-### Evidence
+**Evidence:**
 
 - `temporal_range.csv`
 - `temporal_range__observations.csv`
 - `temporal_range__events.csv`
 - `temporal_range__targets.csv`
 
-### Interpretation
-
-If coverage is misaligned:
+**Interpretation:** If coverage is misaligned:
 
 - pre/post comparisons become unreliable  
 - event studies lose credibility  
@@ -70,26 +60,20 @@ If coverage is misaligned:
 
 Temporal alignment is therefore critical before modeling.
 
-### Confidence
-
-**High** — based on computed min/max dates (severity depends on specific outputs).
+**Confidence:** **High** — based on computed min/max dates (severity depends on specific outputs).
 
 ---
 
 ## Insight 3 — Indicator Coverage is Uneven
 
-### Claim
+**Claim:** Some indicators have **too few time points** to support robust time-series forecasting.
 
-Some indicators have **too few time points** to support robust time-series forecasting.
-
-### Evidence
+**Evidence:**
 
 - `indicator_coverage.csv` → observation counts and date spans  
 - Optional derived list → `sparse_indicators_nobs_le2.csv`
 
-### Interpretation
-
-Indicators with 1–2 observations should be:
+**Interpretation:** Indicators with 1–2 observations should be:
 
 - treated as cross-sectional only  
 - excluded from forecasting  
@@ -98,26 +82,20 @@ Indicators with 1–2 observations should be:
 
 Sparse time series inflate uncertainty and risk misleading trends.
 
-### Confidence
-
-**High** for uneven coverage; **Medium** for exact threshold choice.
+**Confidence:** **High** for uneven coverage; **Medium** for exact threshold choice.
 
 ---
 
 ## Insight 4 — Taxonomy Coverage is Imbalanced
 
-### Claim
+**Claim:** Indicators are not evenly distributed across taxonomy groups (`pillar`, `category`), which can bias conclusions.
 
-Indicators are not evenly distributed across taxonomy groups (`pillar`, `category`), which can bias conclusions.
-
-### Evidence
+**Evidence:**
 
 - `counts__pillar.csv`
 - `counts__category.csv`
 
-### Interpretation
-
-If one pillar dominates:
+**Interpretation:** If one pillar dominates:
 
 - summary statistics over-represent that pillar  
 - models perform best only where coverage is highest  
@@ -125,19 +103,15 @@ If one pillar dominates:
 
 Balanced analysis requires **pillar-aware evaluation**.
 
-### Confidence
-
-**Medium–High** — depends on completeness of taxonomy labeling.
+**Confidence:** **Medium–High** — depends on completeness of taxonomy labeling.
 
 ---
 
 ## Insight 5 — Relationship Integrity is Critical
 
-### Claim
+**Claim:** Impact links referencing missing or unresolved parent events represent a **major data quality risk**.
 
-Impact links referencing missing or unresolved parent events represent a **major data quality risk**.
-
-### Evidence
+**Evidence:**
 
 ### Diagnostics (if issues exist)
 
@@ -149,9 +123,7 @@ Impact links referencing missing or unresolved parent events represent a **major
 - `impact_links.csv`
 - `events.csv`
 
-### Interpretation
-
-Broken relationships mean:
+**Interpretation:** Broken relationships mean:
 
 - event → indicator mappings fail  
 - causal modeling becomes unreliable  
@@ -159,11 +131,7 @@ Broken relationships mean:
 
 The enrichment pipeline’s diagnostics make these problems **detectable and fixable**.
 
-### Confidence
-
-**High** — pipeline-generated checks.
-
----
+**Confidence:** **High** — pipeline-generated checks.
 
 ---
 
@@ -175,19 +143,15 @@ These limitations should be explicitly acknowledged in reporting and modeling de
 
 ### Limitation 1 — Sparse & Irregular Longitudinal Coverage
 
-#### What it is
+**What it is:** Many indicators are not measured regularly or have very few observations.
 
-Many indicators are not measured regularly or have very few observations.
-
-#### Where it appears
+**Where it appears:**
 
 - `indicator_coverage.csv`
 
-#### Why it matters
+**Why it matters:** Time-series models require sufficient history. Sparse data increases variance and weakens forecasts.
 
-Time-series models require sufficient history. Sparse data increases variance and weakens forecasts.
-
-#### Mitigation
+**Mitigation:**
 
 - restrict forecasting to well-covered indicators  
 - use proxies  
@@ -198,24 +162,20 @@ Time-series models require sufficient history. Sparse data increases variance an
 
 ### Limitation 2 — Mixed Definitions & Data-Generating Processes
 
-#### What it is
-
-Indicators mix:
+**What it is:** Indicators mix:
 
 - survey measures  
 - administrative/platform metrics  
 
-#### Where it appears
+**Where it appears:**
 
 - indicator metadata  
 - mixed types in `indicator_coverage.csv`
 
-#### Why it matters
-
-Survey ownership ≠ administrative registrations.  
+**Why it matters:** Survey ownership ≠ administrative registrations.  
 Direct comparisons can create misleading conclusions.
 
-#### Mitigation
+**Mitigation:**
 
 - document definitions per `indicator_code`  
 - avoid cross-type level comparisons  
@@ -225,20 +185,16 @@ Direct comparisons can create misleading conclusions.
 
 ### Limitation 3 — Aggregation Risks
 
-#### What it is
+**What it is:** Mixing national totals with subgroup indicators (urban/rural, gender, region).
 
-Mixing national totals with subgroup indicators (urban/rural, gender, region).
-
-#### Where it appears
+**Where it appears:**
 
 - subgroup fields (if present)  
 - uneven pillar/category counts
 
-#### Why it matters
+**Why it matters:** Models may learn spurious relationships across aggregation levels.
 
-Models may learn spurious relationships across aggregation levels.
-
-#### Mitigation
+**Mitigation:**
 
 - stratify analysis  
 - compare only like-for-like series  
@@ -248,21 +204,17 @@ Models may learn spurious relationships across aggregation levels.
 
 ### Limitation 4 — Event-to-Measurement Time Lag
 
-#### What it is
+**What it is:** Policy or product changes may impact indicators after a delay (or anticipation effects).
 
-Policy or product changes may impact indicators after a delay (or anticipation effects).
-
-#### Where it appears
+**Where it appears:**
 
 - `events.csv`
 - `impact_links.csv`
 - observation timing tables
 
-#### Why it matters
+**Why it matters:** Naive “event then change” logic can misattribute effects.
 
-Naive “event then change” logic can misattribute effects.
-
-#### Mitigation
+**Mitigation:**
 
 - incorporate lag windows  
 - use pre/post evaluation periods  
@@ -272,20 +224,16 @@ Naive “event then change” logic can misattribute effects.
 
 ### Limitation 5 — Heterogeneous Confidence Across Indicators
 
-#### What it is
+**What it is:** Data quality varies widely between indicators and time periods.
 
-Data quality varies widely between indicators and time periods.
-
-#### Where it appears
+**Where it appears:**
 
 - uneven coverage  
 - diagnostic anomalies  
 
-#### Why it matters
+**Why it matters:** A single global confidence statement is misleading.
 
-A single global confidence statement is misleading.
-
-#### Mitigation
+**Mitigation:**
 
 - report per-indicator confidence  
 - use uncertainty intervals  
@@ -306,8 +254,7 @@ Careful preprocessing, stratification, and uncertainty-aware modeling are requir
 
 ---
 
-**Tip:**  
-Re-run the pipeline anytime new enrichment or raw data is added:
+**Tip:** Re-run the pipeline anytime new enrichment or raw data is added:
 
 ```
 python scripts/apply_enrichment.py ...
