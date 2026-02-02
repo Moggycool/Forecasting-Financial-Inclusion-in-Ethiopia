@@ -1,0 +1,31 @@
+record_id,indicator_code,year,value_numeric,gender,location,observation_date,source_name,confidence
+REC_0001,ACC_OWNERSHIP,2014,22.0,all,national,12/31/2014,Global Findex 2014,high
+REC_0002,ACC_OWNERSHIP,2017,35.0,all,national,12/31/2017,Global Findex 2017,high
+REC_0003,ACC_OWNERSHIP,2021,46.0,all,national,12/31/2021,Global Findex 2021,high
+REC_0004,ACC_OWNERSHIP,2021,56.0,male,national,12/31/2021,Global Findex 2021,high
+REC_0005,ACC_OWNERSHIP,2021,36.0,female,national,12/31/2021,Global Findex 2021,high
+REC_0006,ACC_OWNERSHIP,2024,49.0,all,national,11/29/2024,Global Findex 2024,high
+REC_0007,ACC_MM_ACCOUNT,2021,4.7,all,national,12/31/2021,Global Findex 2021,high
+REC_0008,ACC_MM_ACCOUNT,2024,9.45,all,national,11/29/2024,Global Findex 2024,high
+REC_0009,ACC_4G_COV,2022,37.5,all,national,6/30/2023,Ethio Telecom LEAD Report,high
+REC_0010,ACC_4G_COV,2024,70.8,all,national,6/30/2025,Ethio Telecom LEAD Report,high
+REC_0011,ACC_MOBILE_PEN,2025,61.4,all,national,12/31/2025,DataReportal Digital 2026,high
+REC_0012,ACC_FAYDA,2024,8000000.0,all,national,8/15/2024,Fayda Official,high
+REC_0013,ACC_FAYDA,2025,12000000.0,all,national,2/28/2025,World Bank,high
+REC_0014,ACC_FAYDA,2025,15000000.0,all,national,5/15/2025,ID4Africa Conference,high
+REC_0015,USG_P2P_COUNT,2023,49700000.0,all,national,7/7/2024,EthSwitch Annual Report,high
+REC_0016,USG_P2P_COUNT,2024,128300000.0,all,national,7/7/2025,EthSwitch Annual Report,high
+REC_0017,USG_P2P_VALUE,2024,578000000000.0,all,national,7/7/2025,EthSwitch Annual Report,high
+REC_0018,USG_ATM_COUNT,2024,119300000.0,all,national,7/7/2025,EthSwitch Annual Report,high
+REC_0019,USG_ATM_VALUE,2024,156000000000.0,all,national,7/7/2025,EthSwitch Annual Report,high
+REC_0020,USG_CROSSOVER,2024,1.08,all,national,7/7/2025,Calculated,high
+REC_0021,USG_TELEBIRR_USERS,2024,54840000.0,all,national,6/30/2025,Ethio Telecom Report,high
+REC_0022,USG_TELEBIRR_VALUE,2024,2380000000000.0,all,national,6/30/2025,Ethio Telecom Report,high
+REC_0023,USG_MPESA_USERS,2024,10800000.0,all,national,12/31/2024,Safaricom Results,high
+REC_0024,USG_MPESA_ACTIVE,2024,7100000.0,all,national,12/31/2024,Safaricom Results,high
+REC_0025,USG_ACTIVE_RATE,2024,66.0,all,national,12/31/2024,Calculated,high
+REC_0026,AFF_DATA_INCOME,2024,2.0,all,national,12/31/2024,A4AI/ITU,medium
+REC_0027,GEN_GAP_ACC,2021,20.0,all,national,12/31/2021,Global Findex 2021,high
+REC_0028,GEN_GAP_ACC,2024,18.0,all,national,11/29/2024,Global Findex 2024,medium
+REC_0029,GEN_MM_SHARE,2024,14.0,female,national,12/31/2024,NBE/Shega,high
+REC_0030,GEN_GAP_MOBILE,2024,24.0,all,national,12/31/2024,GSMA Gender Gap Report,high

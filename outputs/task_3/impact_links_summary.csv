@@ -1,15 +1,16 @@
-link_record_id,event_record_id,event_name,event_category,event_date,event_source_name,event_confidence,pillar,related_indicator,indicator_code,impact_direction,direction_sign,impact_magnitude,lag_months,evidence_basis,confidence_link,impact_magnitude_pp
-IMP_0001,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,ACCESS,ACC_OWNERSHIP,ACC_OWNERSHIP,increase,1,,12.0,literature,medium,15.0
-IMP_0002,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,USAGE,USG_TELEBIRR_USERS,USG_TELEBIRR_USERS,increase,1,,3.0,empirical,high,
-IMP_0003,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,6.0,empirical,medium,25.0
-IMP_0004,EVT_0002,Safaricom Ethiopia Commercial Launch,market_entry,2022-08-01,News,high,ACCESS,ACC_4G_COV,ACC_4G_COV,increase,1,,12.0,empirical,medium,15.0
-IMP_0005,EVT_0002,Safaricom Ethiopia Commercial Launch,market_entry,2022-08-01,News,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,decrease,-1,,12.0,literature,medium,20.0
-IMP_0006,EVT_0003,M-Pesa Ethiopia Launch,product_launch,2023-08-01,Safaricom,high,USAGE,USG_MPESA_USERS,USG_MPESA_USERS,increase,1,,3.0,empirical,high,
-IMP_0007,EVT_0003,M-Pesa Ethiopia Launch,product_launch,2023-08-01,Safaricom,high,ACCESS,ACC_MM_ACCOUNT,ACC_MM_ACCOUNT,increase,1,,6.0,theoretical,medium,5.0
-IMP_0008,EVT_0004,Fayda Digital ID Program Rollout,infrastructure,2024-01-01,NIDP,high,ACCESS,ACC_OWNERSHIP,ACC_OWNERSHIP,increase,1,,24.0,literature,medium,10.0
-IMP_0009,EVT_0004,Fayda Digital ID Program Rollout,infrastructure,2024-01-01,NIDP,high,GENDER,GEN_GAP_ACC,GEN_GAP_ACC,decrease,-1,,24.0,literature,medium,5.0
-IMP_0010,EVT_0005,Foreign Exchange Liberalization,policy,2024-07-29,NBE,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,increase,1,,3.0,empirical,high,30.0
-IMP_0011,EVT_0007,M-Pesa EthSwitch Integration,partnership,2025-10-27,EthSwitch,high,USAGE,USG_MPESA_ACTIVE,USG_MPESA_ACTIVE,increase,1,,3.0,literature,medium,15.0
-IMP_0012,EVT_0007,M-Pesa EthSwitch Integration,partnership,2025-10-27,EthSwitch,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,3.0,literature,medium,10.0
-IMP_0013,EVT_0008,EthioPay Instant Payment System Launch,infrastructure,2025-12-18,NBE/EthSwitch,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,6.0,literature,medium,15.0
-IMP_0014,EVT_0010,Safaricom Ethiopia Price Increase,pricing,2025-12-15,News,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,increase,1,,1.0,empirical,high,10.0
+link_record_id,event_record_id,event_name,event_category,event_date,event_source_name,event_confidence,pillar,related_indicator,indicator_code,impact_direction,direction_sign,impact_magnitude,impact_estimate,lag_months,evidence_basis,confidence_link,effect_shape,ramp_years,impact_magnitude_source,impact_magnitude_pp
+IMP_0001,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,ACCESS,ACC_OWNERSHIP,ACC_OWNERSHIP,increase,1,,15.0,12.0,literature,medium,,,impact_estimate,15.0
+IMP_0002,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,USAGE,USG_TELEBIRR_USERS,USG_TELEBIRR_USERS,increase,1,,,3.0,empirical,high,,,,
+IMP_0003,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,25.0,6.0,empirical,medium,,,impact_estimate,25.0
+IMP_0004,EVT_0002,Safaricom Ethiopia Commercial Launch,market_entry,2022-08-01,News,high,ACCESS,ACC_4G_COV,ACC_4G_COV,increase,1,,15.0,12.0,empirical,medium,,,impact_estimate,15.0
+IMP_0005,EVT_0002,Safaricom Ethiopia Commercial Launch,market_entry,2022-08-01,News,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,decrease,-1,,-20.0,12.0,literature,medium,,,impact_estimate,20.0
+IMP_0006,EVT_0003,M-Pesa Ethiopia Launch,product_launch,2023-08-01,Safaricom,high,USAGE,USG_MPESA_USERS,USG_MPESA_USERS,increase,1,,,3.0,empirical,high,,,,
+IMP_0007,EVT_0003,M-Pesa Ethiopia Launch,product_launch,2023-08-01,Safaricom,high,ACCESS,ACC_MM_ACCOUNT,ACC_MM_ACCOUNT,increase,1,,5.0,6.0,theoretical,medium,,,impact_estimate,5.0
+IMP_0008,EVT_0004,Fayda Digital ID Program Rollout,infrastructure,2024-01-01,NIDP,high,ACCESS,ACC_OWNERSHIP,ACC_OWNERSHIP,increase,1,,10.0,24.0,literature,medium,,,impact_estimate,10.0
+IMP_0009,EVT_0004,Fayda Digital ID Program Rollout,infrastructure,2024-01-01,NIDP,high,GENDER,GEN_GAP_ACC,GEN_GAP_ACC,decrease,-1,,-5.0,24.0,literature,medium,,,impact_estimate,5.0
+IMP_0010,EVT_0005,Foreign Exchange Liberalization,policy,2024-07-29,NBE,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,increase,1,,30.0,3.0,empirical,high,,,impact_estimate,30.0
+IMP_0011,EVT_0007,M-Pesa EthSwitch Integration,partnership,2025-10-27,EthSwitch,high,USAGE,USG_MPESA_ACTIVE,USG_MPESA_ACTIVE,increase,1,,15.0,3.0,literature,medium,,,impact_estimate,15.0
+IMP_0012,EVT_0007,M-Pesa EthSwitch Integration,partnership,2025-10-27,EthSwitch,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,10.0,3.0,literature,medium,,,impact_estimate,10.0
+IMP_0013,EVT_0008,EthioPay Instant Payment System Launch,infrastructure,2025-12-18,NBE/EthSwitch,high,USAGE,USG_P2P_COUNT,USG_P2P_COUNT,increase,1,,15.0,6.0,literature,medium,,,impact_estimate,15.0
+IMP_0014,EVT_0010,Safaricom Ethiopia Price Increase,pricing,2025-12-15,News,high,AFFORDABILITY,AFF_DATA_INCOME,AFF_DATA_INCOME,increase,1,,10.0,1.0,empirical,high,,,impact_estimate,10.0
+IMP_0015,EVT_0001,Telebirr Launch,product_launch,2021-05-17,Ethio Telecom,high,ACCESS,ACC_MM_ACCOUNT,ACC_MM_ACCOUNT,increase,1,5.516,5.516,12.0,theoretical,medium,,,impact_magnitude,5.516

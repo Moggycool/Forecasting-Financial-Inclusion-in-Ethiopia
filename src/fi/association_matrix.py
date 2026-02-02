@@ -22,33 +22,25 @@ EVENT_INDEX_COLS: list[str] = ["event_record_id", "event_name", "event_category"
 
 
 def build_association_matrix(df_summary: pd.DataFrame, indicators: Sequence[str]) -> pd.DataFrame:
-    """Build an event–indicator association matrix from an impact-links summary DataFrame.
-
-    Parameters
-    ----------
-    df_summary:
-        Expected to include:
-        - event_record_id, event_name, event_category, event_date
-        - indicator_code
-        - impact_magnitude_pp
-    indicators:
-        Indicator codes to include as columns.
-
-    Returns
-    -------
-    pd.DataFrame
-        One row per event, with indicator columns filled (missing indicators filled with 0.0).
-    """
+    """Build an event–indicator association matrix from an impact-links summary DataFrame."""
     indicators_list = list(indicators)
 
-    # If df_summary is missing expected structure, return an empty-but-well-formed frame
-    required = set(EVENT_INDEX_COLS + ["indicator_code", "impact_magnitude_pp"])
-    if df_summary is None or df_summary.empty or not required.issubset(df_summary.columns):
+    if df_summary is None or df_summary.empty:
         cols = EVENT_INDEX_COLS + indicators_list
         return pd.DataFrame(columns=cols)
 
-    df = df_summary.loc[df_summary["indicator_code"].isin(indicators_list)].copy()
+    # Allow partial schemas (common during early joins); fill missing index cols with NA
+    df = df_summary.copy()
+    for c in EVENT_INDEX_COLS:
+        if c not in df.columns:
+            df[c] = pd.NA
 
+    required = set(EVENT_INDEX_COLS + ["indicator_code", "impact_magnitude_pp"])
+    if not required.issubset(df.columns):
+        cols = EVENT_INDEX_COLS + indicators_list
+        return pd.DataFrame(columns=cols)
+
+    df = df.loc[df["indicator_code"].isin(indicators_list)].copy()
     if df.empty:
         cols = EVENT_INDEX_COLS + indicators_list
         return pd.DataFrame(columns=cols)
@@ -64,29 +56,15 @@ def build_association_matrix(df_summary: pd.DataFrame, indicators: Sequence[str]
         .reset_index()
     )
 
-    # Ensure all requested indicator columns exist (even if absent in the data)
     for c in indicators_list:
         if c not in mat.columns:
             mat[c] = 0.0
 
-    # Stabilize column order: event index cols first, then indicators in the provided order
     return mat[EVENT_INDEX_COLS + indicators_list]
 
 
 def plot_heatmap(mat: pd.DataFrame, key_indicators: Sequence[str], out_path: str) -> None:
-    """Plot heatmap of an event–indicator association matrix to disk.
-
-    Gracefully handles empty/degenerate inputs by writing a placeholder figure.
-
-    Parameters
-    ----------
-    mat:
-        DataFrame returned by `build_association_matrix`.
-    key_indicators:
-        Indicator columns to plot.
-    out_path:
-        Output image path.
-    """
+    """Plot heatmap of an event–indicator association matrix to disk."""
     indicators = list(key_indicators)
 
     def _write_placeholder(msg: str) -> None:
@@ -113,9 +91,8 @@ def plot_heatmap(mat: pd.DataFrame, key_indicators: Sequence[str], out_path: str
     finite = np.isfinite(vals)
     vmax = float(np.nanmax(np.abs(vals[finite]))) if finite.any() else 0.0
     if vmax == 0.0:
-        vmax = 1.0  # avoid singular color scale
+        vmax = 1.0
 
-    # Build y-axis labels (prefer event_name, fallback to event_record_id)
     if "event_name" in mat.columns:
         ylabels = mat["event_name"].fillna("").astype(str).tolist()
     elif "event_record_id" in mat.columns:
