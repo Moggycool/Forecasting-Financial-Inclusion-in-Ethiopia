@@ -1,6 +1,6 @@
 """Functions for computing event effects on financial inclusion indicators.
 
-Implements month-aware lag and (by default) linear ramp diffusion across the FINDEX year grid.
+Implements month-aware lag and (by default) linear ramp diffusion across an annual year grid.
 
 Key ideas
 ---------
@@ -11,6 +11,16 @@ Key ideas
     - ramp: 0 until lag is complete, then linearly ramps to full magnitude over `ramp_years`
 
 This module is intentionally deterministic and audit-friendly.
+
+Update note (Task 4 horizon support)
+-----------------------------------
+Task 4 requires annual event effects for forecast years (e.g., 2025–2027).
+Earlier versions often generated tidy effects only on the FINDEX observation grid
+(2011, 2014, 2017, 2021, 2024). That causes Task 4 joins to return 0 event impacts
+for 2025–2027 even if events have `event_date` in 2025.
+
+This version adds utilities to extend the year grid safely and makes it easy for
+Task 3 scripts to generate tidy effects including the forecast horizon.
 """
 
 from __future__ import annotations
@@ -20,7 +30,11 @@ from typing import Sequence
 import numpy as np
 import pandas as pd
 
+# Historical FINDEX-like grid used in earlier tasks
 FINDEX_YEAR_GRID: list[int] = [2011, 2014, 2017, 2021, 2024]
+
+# Default forecast horizon used in Task 4 (override as needed)
+DEFAULT_FORECAST_YEARS: list[int] = [2025, 2026, 2027]
 
 
 def _to_timestamp(x) -> pd.Timestamp:
@@ -54,6 +68,32 @@ def _year_month_index(year: int, snapshot_month: int = 12) -> float:
     if not (1 <= m <= 12):
         raise ValueError("snapshot_month must be in 1..12")
     return float(year) * 12.0 + float(m - 1)
+
+
+def normalize_years(
+    years: Sequence[int] | None,
+    *,
+    base_grid: Sequence[int] = FINDEX_YEAR_GRID,
+    ensure_years: Sequence[int] | None = None,
+) -> list[int]:
+    """Normalize/validate a year grid and optionally ensure extra years are present.
+
+    This function is the core patch for the Task 3 → Task 4 handoff:
+    include ensure_years=[2025, 2026, 2027] (or any horizon) so tidy outputs contain forecast years.
+    """
+    if years is None:
+        years_list = [int(y) for y in base_grid]
+    else:
+        years_list = [int(y) for y in years]
+
+    if ensure_years is not None:
+        years_list = sorted(set(years_list).union({int(y) for y in ensure_years}))
+
+    years_list = sorted(set(years_list))
+    if len(years_list) == 0:
+        raise ValueError("years grid is empty")
+
+    return years_list
 
 
 def effect_step_month_aware(
@@ -116,27 +156,28 @@ def compute_effect_series(
     - effect_shape / shape: "ramp" (default) or "step"
     - ramp_years: float
     """
-    years_list = list(years) if years is not None else FINDEX_YEAR_GRID
+    years_list = normalize_years(years)
     year_index = pd.Index(years_list, dtype="int64")
 
     # Event date -> timestamp
-    raw_date = link_row.get("event_date")
-    event_ts = _to_timestamp(raw_date)
+    event_ts = _to_timestamp(link_row.get("event_date"))
 
     # Lag
-    lag_months = link_row.get("lag_months", 0.0)
-    lag_months = float(lag_months) if pd.notna(lag_months) else 0.0
+    lag_m = link_row.get("lag_months", 0.0)
+    lag_m = float(lag_m) if pd.notna(lag_m) else 0.0
 
     # Magnitude (pp)
     mag_pp = link_row.get("impact_magnitude_pp", np.nan)
     mag_pp = float(mag_pp) if pd.notna(mag_pp) else np.nan
 
-    # Shape: prefer per-row if available
+    # Shape resolution: prefer per-row if available
     row_shape = link_row.get("effect_shape", link_row.get("shape", None))
     use_shape = (
         (str(row_shape).strip().lower() if row_shape is not None and str(row_shape).strip() else None)
-        or (str(shape).strip().lower() if shape is not None else "ramp")
+        or (str(shape).strip().lower() if shape is not None and str(shape).strip() else "ramp")
     )
+    if use_shape not in {"ramp", "step"}:
+        use_shape = "ramp"  # defensive fallback
 
     # Ramp duration: prefer per-row if available
     row_ramp_years = link_row.get("ramp_years", None)
@@ -147,13 +188,13 @@ def compute_effect_series(
     vals: list[float] = []
     for y in years_list:
         if use_shape == "step":
-            vals.append(effect_step_month_aware(int(y), event_ts, lag_months, mag_pp, snapshot_month=snapshot_month))
+            vals.append(effect_step_month_aware(int(y), event_ts, lag_m, mag_pp, snapshot_month=snapshot_month))
         else:
             vals.append(
                 effect_ramp_month_aware(
                     int(y),
                     event_ts,
-                    lag_months,
+                    lag_m,
                     ramp_months,
                     mag_pp,
                     snapshot_month=snapshot_month,
@@ -170,16 +211,23 @@ def effects_tidy(
     default_shape: str = "ramp",
     default_ramp_years: float = 3.0,
     snapshot_month: int = 12,
+    *,
+    ensure_forecast_years: bool = True,
+    forecast_years: Sequence[int] | None = None,
 ) -> pd.DataFrame:
     """Compute tidy effects DataFrame from summary links DataFrame.
 
-    Output columns match your existing export:
+    Output columns (export-friendly)
+    --------------------------------
     event_record_id,event_name,indicator_code,year,effect_pp,shape,ramp_years,lag_months,
     impact_magnitude_pp,event_date,link_record_id
-    """
-    years_list = list(years) if years is not None else FINDEX_YEAR_GRID
-    ind_set = set(indicators) if indicators is not None else None
 
+    Parameters
+    ----------
+    ensure_forecast_years:
+        If True, ensures forecast_years (default: DEFAULT_FORECAST_YEARS) are included in the year grid.
+        This is the recommended Task 3 patch so Task 4 can join effects for 2025–2027.
+    """
     if df_summary is None or df_summary.empty:
         return pd.DataFrame(
             columns=[
@@ -197,6 +245,14 @@ def effects_tidy(
             ]
         )
 
+    ind_set = set(indicators) if indicators is not None else None
+
+    ensure_years = None
+    if ensure_forecast_years:
+        ensure_years = list(forecast_years) if forecast_years is not None else DEFAULT_FORECAST_YEARS
+
+    years_list = normalize_years(years, ensure_years=ensure_years)
+
     rows: list[dict[str, object]] = []
     for _, r in df_summary.iterrows():
         ind = r.get("indicator_code")
@@ -211,6 +267,16 @@ def effects_tidy(
             snapshot_month=snapshot_month,
         )
 
+        # Write resolved values (avoid NaN leakage for audit stability)
+        row_shape = r.get("effect_shape", r.get("shape", None))
+        out_shape = (
+            str(row_shape).strip().lower()
+            if row_shape is not None and str(row_shape).strip()
+            else str(default_shape).strip().lower()
+        )
+        row_ramp = r.get("ramp_years", None)
+        out_ramp = float(row_ramp) if pd.notna(row_ramp) else float(default_ramp_years)
+
         for y in years_list:
             rows.append(
                 {
@@ -219,17 +285,19 @@ def effects_tidy(
                     "indicator_code": ind,
                     "year": int(y),
                     "effect_pp": float(s.loc[int(y)]),
-                    "shape": r.get("effect_shape", default_shape),
-                    "ramp_years": r.get("ramp_years", default_ramp_years),
+                    "shape": out_shape,
+                    "ramp_years": out_ramp,
                     "lag_months": r.get("lag_months"),
-                    # useful for debugging/audit
                     "impact_magnitude_pp": r.get("impact_magnitude_pp"),
                     "event_date": r.get("event_date"),
                     "link_record_id": r.get("link_record_id", r.get("record_id")),
                 }
             )
 
-    return pd.DataFrame(rows)
+    out = pd.DataFrame(rows)
+    if not out.empty:
+        out = out.sort_values(["indicator_code", "event_record_id", "year"]).reset_index(drop=True)
+    return out
 
 
 def sum_effects_over_events(effects_df: pd.DataFrame) -> pd.DataFrame:
@@ -238,5 +306,4 @@ def sum_effects_over_events(effects_df: pd.DataFrame) -> pd.DataFrame:
         return effects_df if effects_df is not None else pd.DataFrame()
 
     grouped = effects_df.groupby(["year", "indicator_code"], as_index=False)[["effect_pp"]].sum()
-    out = grouped.rename(columns={"effect_pp": "total_effect_pp"})
-    return out
+    return grouped.rename(columns={"effect_pp": "total_effect_pp"})

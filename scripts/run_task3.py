@@ -17,7 +17,12 @@ from src.fi.association_matrix import (  # noqa: E402
     plot_heatmap_signed_annotated_to_file,
 )
 from src.fi.data_io import coerce_datetime, load_csv  # noqa: E402
-from src.fi.event_effects import FINDEX_YEAR_GRID, effects_tidy  # noqa: E402
+from src.fi.event_effects import (  # noqa: E402
+    DEFAULT_FORECAST_YEARS,
+    FINDEX_YEAR_GRID,
+    effects_tidy,
+    normalize_years,
+)
 from src.fi.impact_links import build_impact_links_summary, join_links_events  # noqa: E402
 from src.fi.task3_validation import validate_telebirr_mm  # noqa: E402
 
@@ -122,9 +127,9 @@ def main() -> None:
     # --- Heatmaps (basic + improved signed) ---
     # Basic heatmap (keeps your existing artifact name)
     plot_heatmap_basic_to_file(
-       mat=mat,
-       key_indicators=KEY_INDICATORS,
-       out_path=str(out_dir / "event_indicator_association_heatmap.png"),
+        mat=mat,
+        key_indicators=KEY_INDICATORS,
+        out_path=str(out_dir / "event_indicator_association_heatmap.png"),
     )
 
     # Signed full heatmap: use all indicator columns present in `mat`
@@ -150,14 +155,34 @@ def main() -> None:
         title="Event–Key Indicators (signed, diverging @0, annotated)",
     )
 
-    # Month-aware effects (tidy)
+    # ---------------------------------------------------------------------
+    # Month-aware effects (tidy) — PATCH: forecast-aware year grid
+    # ---------------------------------------------------------------------
+    years_effects = normalize_years(
+        FINDEX_YEAR_GRID,
+        ensure_years=DEFAULT_FORECAST_YEARS,  # ensures 2025–2027 appear in tidy
+    )
+    print(f"[task3] effects year grid = {years_effects}")
+
     eff = effects_tidy(
         summary,
         KEY_INDICATORS,
-        years=FINDEX_YEAR_GRID,
+        years=years_effects,
         default_shape="ramp",
         default_ramp_years=3.0,
+        # We already ensured the forecast years explicitly via normalize_years above.
+        ensure_forecast_years=False,
     )
+
+    # Guardrail: hard fail if forecast years are missing (prevents silent disconnection in Task 4)
+    missing = sorted(set(DEFAULT_FORECAST_YEARS) - set(eff["year"].unique().tolist())) if not eff.empty else list(DEFAULT_FORECAST_YEARS)
+    if missing:
+        raise RuntimeError(
+            "[task3] FATAL: event_effects_tidy is missing forecast years "
+            f"{missing}. Check effects_tidy() / normalize_years() wiring."
+        )
+    print("[task3] OK: event_effects_tidy contains all forecast years:", DEFAULT_FORECAST_YEARS)
+
     _safe_to_csv(eff, out_dir / "event_effects_tidy.csv")
 
     # --- Realized-first Telebirr validation (safe if obs missing) ---
