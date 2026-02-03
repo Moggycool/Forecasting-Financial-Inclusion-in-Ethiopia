@@ -111,7 +111,6 @@ def load_top_contributors(repo_root: Path) -> pd.DataFrame:
 
     return df.sort_values(["indicator_code", "effect_pp"], ascending=[True, False]).reset_index(drop=True)
 
-
 def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     """
     Loads unified enriched dataset and returns standardized long-format observations with:
@@ -127,18 +126,38 @@ def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"enriched csv missing required columns: {missing}")
 
-    # Derive year
-    if "fiscal_year" in raw.columns:
-        raw["year"] = pd.to_numeric(raw["fiscal_year"], errors="coerce")
-    elif "observation_date" in raw.columns:
-        raw["year"] = pd.to_datetime(raw["observation_date"], errors="coerce").dt.year
-    else:
-        raise ValueError("enriched csv missing both fiscal_year and observation_date for year extraction")
+    # --- Normalize key string columns early (pre-filter) ---
+    # record_type normalization is crucial (avoids dropping rows due to case/whitespace)
+    raw["record_type"] = raw["record_type"].astype(str).str.strip().str.lower()
 
+    # Normalize indicator_code to avoid trailing spaces / mixed case issues
+    raw["indicator_code"] = raw["indicator_code"].astype(str).str.strip()
+
+    # Normalize slicer fields if present (so UI selections match reliably)
+    for c in ["gender", "location", "region", "unit", "value_type", "pillar", "indicator"]:
+        if c in raw.columns:
+            raw[c] = raw[c].astype(str).str.strip()
+
+    # --- Derive year ---
+    if "fiscal_year" in raw.columns:
+        # Handles numeric years; FY strings will become NaN (kept out unless observation_date exists)
+        yr = pd.to_numeric(raw["fiscal_year"], errors="coerce")
+    else:
+        yr = pd.Series([pd.NA] * len(raw), index=raw.index)
+
+    if ("observation_date" in raw.columns) and yr.isna().all():
+        # Fallback if fiscal_year is entirely non-numeric / missing
+        yr = pd.to_datetime(raw["observation_date"], errors="coerce").dt.year
+    elif "observation_date" in raw.columns:
+        # Fill missing year values from observation_date where possible
+        yr2 = pd.to_datetime(raw["observation_date"], errors="coerce").dt.year
+        yr = yr.fillna(yr2)
+
+    raw["year"] = yr
     raw["value"] = pd.to_numeric(raw["value_numeric"], errors="coerce")
 
-    # Keep observations only
-    df = raw[raw["record_type"].astype(str).str.lower().eq("observation")].copy()
+    # --- Keep observations only ---
+    df = raw[raw["record_type"].eq("observation")].copy()
 
     # Keep filterable metadata if present
     keep_cols = [
@@ -151,13 +170,22 @@ def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     df = df[keep_cols].copy()
 
     df = df.dropna(subset=["year", "indicator_code", "value"]).copy()
-    df["year"] = df["year"].astype(int)
-    df["indicator_code"] = df["indicator_code"].astype(str)
 
-    # Normalize common fields (optional)
+    # Standard types
+    df["year"] = pd.to_numeric(df["year"], errors="coerce")
+    df = df.dropna(subset=["year"]).copy()
+    df["year"] = df["year"].astype(int)
+
+    df["indicator_code"] = df["indicator_code"].astype(str).str.strip()
+
+    # Normalize commonly used slicers to stable forms
+    if "gender" in df.columns:
+        df["gender"] = df["gender"].astype(str).str.strip().str.lower()
+    if "location" in df.columns:
+        df["location"] = df["location"].astype(str).str.strip().str.lower()
     if "unit" in df.columns:
-        df["unit"] = df["unit"].astype(str)
+        df["unit"] = df["unit"].astype(str).str.strip()
     if "value_type" in df.columns:
-        df["value_type"] = df["value_type"].astype(str)
+        df["value_type"] = df["value_type"].astype(str).str.strip().str.lower()
 
     return df.sort_values(["indicator_code", "year"]).reset_index(drop=True)
