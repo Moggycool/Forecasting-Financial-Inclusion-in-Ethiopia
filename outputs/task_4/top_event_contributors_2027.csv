@@ -1,1 +1,6 @@
 indicator_code,indicator_label,contributors_from_indicator,event_record_id,event_name,effect_pp
+ACC_OWNERSHIP,Account ownership (Access),ACC_OWNERSHIP,EVT_0001,Telebirr Launch,15.0
+ACC_OWNERSHIP,Account ownership (Access),ACC_OWNERSHIP,EVT_0004,Fayda Digital ID Program Rollout,6.388888888888888
+USG_ACTIVE_RATE,Active usage rate (Usage proxy),USG_P2P_COUNT,EVT_0001,Telebirr Launch,25.0
+USG_ACTIVE_RATE,Active usage rate (Usage proxy),USG_P2P_COUNT,EVT_0008,EthioPay Instant Payment System Launch,7.5
+USG_ACTIVE_RATE,Active usage rate (Usage proxy),USG_P2P_COUNT,EVT_0007,M-Pesa EthSwitch Integration,6.388888888888888
