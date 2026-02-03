@@ -45,28 +45,40 @@ def join_links_events(links_df: pd.DataFrame, events_df: pd.DataFrame) -> pd.Dat
 
 
 def build_impact_links_summary(joined: pd.DataFrame) -> pd.DataFrame:
-    """Returns a tidy link-level table with signed magnitude in pp-space."""
+    """Returns a tidy link-level table with signed magnitude in pp-space.
+
+    Important:
+    - In raw CSVs, impact values may appear in BOTH `impact_magnitude` and `impact_estimate`.
+    - For calibration workflows, we prefer `impact_magnitude` as the authoritative field.
+      `impact_estimate` becomes a fallback.
+    """
     out = pd.DataFrame(
         {
             "link_record_id": joined.get("record_id_link", joined.get("record_id")),
-            "event_record_id": joined.get("record_id_event"),
+            "event_record_id": joined.get("record_id_event", joined.get("parent_id")),
             "event_name": joined.get("indicator_event", joined.get("indicator")),
             "event_category": joined.get("category_event", joined.get("category")),
-            "event_date": joined.get("event_date", joined.get("observation_date_event", joined.get("observation_date"))),
+            "event_date": joined.get(
+                "event_date",
+                joined.get("observation_date_event", joined.get("observation_date")),
+            ),
             "event_source_name": joined.get("source_name_event", joined.get("source_name")),
             "event_confidence": joined.get("confidence_event"),
             "pillar": joined.get("pillar_link", joined.get("pillar")),
             "related_indicator": joined.get("related_indicator"),
-            # NOTE: raw data uses related_indicator as the actual code; indicator_code is often blank
+            # raw data often uses related_indicator as the actual code; indicator_code can be blank
             "indicator_code": joined.get("indicator_code"),
             "impact_direction": joined.get("impact_direction"),
             "direction_sign": joined.get("impact_direction").apply(standardize_direction),
-            # NOTE: raw data often stores numeric magnitude in impact_estimate; impact_magnitude can be 'high/medium/low'
+            # numeric fields (keep both for auditability)
             "impact_magnitude": joined.get("impact_magnitude").apply(to_float),
             "impact_estimate": joined.get("impact_estimate").apply(to_float),
             "lag_months": joined.get("lag_months").apply(to_float),
             "evidence_basis": joined.get("evidence_basis"),
             "confidence_link": joined.get("confidence_link", joined.get("confidence")),
+            # optional per-link effect controls (if present in future)
+            "effect_shape": joined.get("effect_shape"),
+            "ramp_years": joined.get("ramp_years").apply(to_float) if "ramp_years" in joined.columns else np.nan,
         }
     )
 
@@ -76,10 +88,20 @@ def build_impact_links_summary(joined: pd.DataFrame) -> pd.DataFrame:
         rel = out["related_indicator"].astype("string").fillna("").str.strip()
         out["indicator_code"] = ind.mask(ind.eq(""), rel)
 
-    # Choose best available numeric magnitude
-    mag = out["impact_estimate"].where(out["impact_estimate"].notna(), out["impact_magnitude"])
-    out["impact_magnitude_pp"] = mag * out["direction_sign"]
+    # Choose best available numeric magnitude:
+    # - prefer impact_magnitude (authoritative for calibration)
+    # - else use impact_estimate as fallback
+    chosen = out["impact_magnitude"].where(out["impact_magnitude"].notna(), out["impact_estimate"])
 
-    # Keep output schema consistent with the rest of the project
-    out = out.drop(columns=["impact_estimate"], errors="ignore")
+    # Track where the chosen value came from (safe dtype: avoid numpy string/float promotion)
+    out["impact_magnitude_source"] = pd.Series(pd.NA, index=out.index, dtype="string")
+    out.loc[out["impact_magnitude"].notna(), "impact_magnitude_source"] = "impact_magnitude"
+    out.loc[
+        out["impact_magnitude"].isna() & out["impact_estimate"].notna(),
+        "impact_magnitude_source",
+    ] = "impact_estimate"
+
+    # Signed pp-space magnitude used by the temporal engine
+    out["impact_magnitude_pp"] = chosen * out["direction_sign"]
+
     return out

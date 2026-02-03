@@ -1,180 +1,191 @@
-"""Functions for validating observed data against predicted impacts.
-
-This module is defensive by design because the "observations" input may sometimes be a
-non-observations summary table (e.g., temporal ranges). In those cases, functions will
-return NaN rather than raising, so notebooks can skip validation gracefully.
-
-Key behaviors:
-- `get_observed(...)` returns NaN if required columns are missing.
-- `validate_telebirr_mm(...)` is parameterized by `target_indicator` and reports which
-  indicators Telebirr links actually target (`telebirr_link_targets`), plus the count
-  of all Telebirr links found (`n_telebirr_links_all_targets`).
-"""
+""" Script to run Task 3: Analyze impact links and compute event effects. """
 from __future__ import annotations
 
-import numpy as np
+import sys
+from pathlib import Path
+
 import pandas as pd
 
+# Get project root (must run before importing from src.* when executing as a script)
+_ROOT = Path(__file__).resolve().parents[1]
+if str(_ROOT) not in sys.path:
+    sys.path.insert(0, str(_ROOT))
 
-def _year_from_date(s) -> float:
-    """Extract year from a date-like value, returning NaN if invalid."""
-    dt = pd.to_datetime(s, errors="coerce")
-    if isinstance(dt, pd.Timestamp):
-        return float(dt.year) if not pd.isna(dt) else np.nan
-
-    ser = pd.Series(dt).dropna()
-    if ser.empty:
-        return np.nan
-    return float(pd.Timestamp(ser.iloc[0]).year)
-
-
-def _pick_date_col(df: pd.DataFrame) -> str | None:
-    """Pick a plausible date column for deriving year."""
-    for c in ["observation_date", "date", "period_end", "period_start", "event_date"]:
-        if c in df.columns:
-            return c
-    return None
+from src.fi.association_matrix import (  # noqa: E402
+    build_association_matrix,
+    plot_heatmap_basic_to_file,
+    plot_heatmap_signed_annotated_to_file,
+)
+from src.fi.data_io import coerce_datetime, load_csv  # noqa: E402
+from src.fi.event_effects import FINDEX_YEAR_GRID, effects_tidy  # noqa: E402
+from src.fi.impact_links import build_impact_links_summary, join_links_events  # noqa: E402
+from src.fi.task3_validation import validate_telebirr_mm  # noqa: E402
 
 
-def _pick_value_col(df: pd.DataFrame) -> str | None:
-    """Pick a plausible numeric value column."""
-    for c in ["value_numeric", "value", "observed_value"]:
-        if c in df.columns:
-            return c
-    return None
+# Keep existing KPI list used for the *matrix build* and effects.
+KEY_INDICATORS = ["ACC_OWNERSHIP", "ACC_MM_ACCOUNT", "USG_DIGITAL_PAYMENT"]
+
+# This is the *extra* KPI for the focused signed heatmap only.
+KEY_HEATMAP_EXTRA = ["GAP_ACC_OWNERSHIP_MALE_MINUS_FEMALE_PP"]
 
 
-def _normalize_year_column(df: pd.DataFrame) -> pd.Series:
-    """Return a nullable Int64 year Series extracted from df['year'] without pd.to_numeric (Pylance-friendly)."""
-    s = df["year"].astype("string")
-    extracted = s.str.extract(r"(\d{4})", expand=False)
-    return extracted.astype("Int64")
+def _norm_str(s: pd.Series) -> pd.Series:
+    return s.astype("string").fillna("").str.strip()
 
 
-def _derive_year_from_dates(dates: pd.Series) -> pd.Series:
-    """Return a nullable Int64 year Series from date-like values, with NaT -> <NA>."""
-    dts = pd.to_datetime(dates, errors="coerce")
-    years = pd.Series(pd.DatetimeIndex(dts).year, index=dates.index)
-    years = years.where(pd.notna(dts), pd.NA).astype("Int64")
-    return years
+def _safe_load_optional_csv(path: Path) -> pd.DataFrame:
+    """Load CSV if it exists; otherwise return empty df (defensive)."""
+    try:
+        if path.exists():
+            return load_csv(str(path))
+    except Exception:
+        pass
+    return pd.DataFrame()
 
 
-def get_observed(
-    df_obs: pd.DataFrame,
-    indicator_code: str,
-    year: int,
-    gender: str = "all",
-    location: str = "national",
-) -> float:
-    """Get observed value for given indicator_code and year, optionally filtering by gender and location.
-
-    Works with observations tables that may have:
-    - `year` directly, or a date column such as `observation_date`/`period_end`
-    - `indicator_code` or only `related_indicator`
-    - different numeric value columns (prefers `value_numeric`)
-    """
-    if df_obs is None or df_obs.empty:
-        return np.nan
-
-    df = df_obs.copy()
-
-    # Ensure indicator_code exists
-    if "indicator_code" not in df.columns and "related_indicator" in df.columns:
-        df["indicator_code"] = df["related_indicator"]
-
-    if "indicator_code" not in df.columns:
-        # Not an observations table
-        return np.nan
-
-    # Ensure year exists
-    if "year" in df.columns:
-        df["year"] = _normalize_year_column(df)
-    else:
-        date_col = _pick_date_col(df)
-        if date_col is None:
-            return np.nan
-        df["year"] = _derive_year_from_dates(pd.Series(df[date_col], index=df.index))
-
-    value_col = _pick_value_col(df)
-    if value_col is None:
-        return np.nan
-
-    sub = df[(df["indicator_code"] == indicator_code) & (df["year"] == int(year))]
-
-    if "gender" in sub.columns:
-        sub = sub[sub["gender"].fillna("all") == gender]
-    if "location" in sub.columns:
-        sub = sub[sub["location"].fillna("national") == location]
-
-    if sub.empty:
-        return np.nan
-
-    vals = pd.to_numeric(pd.Series(sub[value_col], index=sub.index), errors="coerce")
-    return float(vals.mean())
+def _safe_to_csv(df: pd.DataFrame, path: Path) -> None:
+    """Defensive to_csv: never crash Task 3 just because a DF is empty/None."""
+    if df is None:
+        return
+    try:
+        df.to_csv(path, index=False)
+    except Exception as e:
+        print(f"[task3] WARN: failed writing {path.name}: {e}")
 
 
-def validate_telebirr_mm(
-    df_obs: pd.DataFrame,
-    df_links_summary: pd.DataFrame,
-    year_a: int = 2021,
-    year_b: int = 2024,
-    target_indicator: str = "ACC_MM_ACCOUNT",
-    event_regex: str = "telebirr",
-) -> pd.DataFrame:
-    """Validate observed changes against predicted impacts for a Telebirr-related event."""
-    obs_a = get_observed(df_obs, target_indicator, year_a)
-    obs_b = get_observed(df_obs, target_indicator, year_b)
-    obs_delta = obs_b - obs_a
+def main() -> None:
+    """Main function to run Task 3 analysis."""
+    root = Path(__file__).resolve().parents[1]
+    data_dir = root / "data"
+    out_dir = root / "outputs" / "task_3"
+    out_dir.mkdir(parents=True, exist_ok=True)
 
-    # All Telebirr links (any indicator)
-    if df_links_summary is None or df_links_summary.empty or "event_name" not in df_links_summary.columns:
-        tele_all = pd.DataFrame()
-    else:
-        mask_evt = df_links_summary["event_name"].astype(str).str.contains(event_regex, case=False, na=False)
-        tele_all = df_links_summary[mask_evt].copy()
+    events_path = data_dir / "processed" / "eda_enriched" / "events.csv"
+    links_path = data_dir / "processed" / "eda_enriched" / "impact_links.csv"
+    raw_links_path = data_dir / "raw" / "ethiopia_fi_unified_data__impact_links.csv"
 
-    # Diagnostics: which indicators are linked by Telebirr?
-    tele_targets = (
-        tele_all["indicator_code"]
-        .astype(str)
-        .str.strip()
-        .replace({"": np.nan})
-        .dropna()
-        .unique()
-        .tolist()
-        if (not tele_all.empty and "indicator_code" in tele_all.columns)
-        else []
+    # Optional observations (used only for validation; do not fail if absent)
+    obs_candidates = [
+        data_dir / "processed" / "eda_enriched" / "observations.csv",
+        data_dir / "processed" / "observations.csv",
+        data_dir / "raw" / "observations.csv",
+    ]
+    df_obs = pd.DataFrame()
+    for p in obs_candidates:
+        df_obs = _safe_load_optional_csv(p)
+        if not df_obs.empty:
+            print(f"[task3] loaded observations: {p}")
+            break
+    if df_obs.empty:
+        print("[task3] observations not found (or empty); validation will return NaN safely.")
+
+    events = load_csv(str(events_path))
+    links = load_csv(str(links_path))
+
+    # Fallback: if processed impact_links is empty, use raw unified impact links
+    if links.empty:
+        if not raw_links_path.exists():
+            raise FileNotFoundError(
+                f"impact_links.csv is empty and raw fallback not found: {raw_links_path}"
+            )
+        print(f"[task3] processed impact_links.csv is empty; using raw: {raw_links_path}")
+        links = load_csv(str(raw_links_path))
+
+    # Normalize join keys for reliability
+    if "record_id" not in events.columns:
+        raise ValueError(f"events.csv missing required 'record_id'. Columns={list(events.columns)}")
+    if "parent_id" not in links.columns:
+        raise ValueError(f"impact_links missing required 'parent_id'. Columns={list(links.columns)}")
+
+    events = events.copy()
+    links = links.copy()
+    events["record_id"] = _norm_str(events["record_id"])
+    links["parent_id"] = _norm_str(links["parent_id"])
+
+    # Coerce the correct event date column (avoid silently breaking plots)
+    if "event_date" in events.columns:
+        events = coerce_datetime(events, "event_date")
+    elif "observation_date" in events.columns:
+        events = coerce_datetime(events, "observation_date")
+
+    overlap = len(set(links["parent_id"].tolist()) & set(events["record_id"].tolist()))
+    print(f"[task3] links={len(links)} events={len(events)} overlap={overlap}")
+
+    joined = join_links_events(links, events)
+    summary = build_impact_links_summary(joined)
+    _safe_to_csv(summary, out_dir / "impact_links_summary.csv")
+
+    # --- Association matrix CSV (same output file name as before) ---
+    mat = build_association_matrix(summary, KEY_INDICATORS)
+    _safe_to_csv(mat, out_dir / "event_indicator_association_matrix.csv")
+
+    # --- Heatmaps (basic + improved signed) ---
+    # Basic heatmap (keeps your existing artifact name)
+    plot_heatmap_basic_to_file(
+       mat=mat,
+       key_indicators=KEY_INDICATORS,
+       out_path=str(out_dir / "event_indicator_association_heatmap.png"),
     )
-    tele_targets_str = ", ".join(sorted(tele_targets)) if tele_targets else ""
 
-    # Telebirr links targeting the requested indicator
-    if tele_all.empty or "indicator_code" not in tele_all.columns:
-        tele = pd.DataFrame()
-    else:
-        mask_ind = tele_all["indicator_code"].astype(str).str.strip().str.upper().eq(target_indicator.upper())
-        tele = tele_all[mask_ind].copy()
+    # Signed full heatmap: use all indicator columns present in `mat`
+    # (excluding event metadata). This gives you the "full signed matrix" view.
+    meta_cols = ["event_record_id", "event_name", "event_category", "event_date"]
+    full_indicators = [c for c in mat.columns if c not in meta_cols]
 
-    # Predicted saturated impact = sum of impact magnitudes for the target indicator
-    if not tele.empty and "impact_magnitude_pp" in tele.columns:
-        mags = pd.to_numeric(pd.Series(tele["impact_magnitude_pp"], index=tele.index), errors="coerce")
-        pred_tele_saturated = float(mags.sum())
-    else:
-        pred_tele_saturated = np.nan
-
-    return pd.DataFrame(
-        [
-            {
-                "indicator_code": target_indicator,
-                "obs_year_a": year_a,
-                "obs_year_b": year_b,
-                "obs_a": obs_a,
-                "obs_b": obs_b,
-                "obs_delta_pp": obs_delta,
-                "pred_telebirr_saturated_pp": pred_tele_saturated,
-                "residual_pp": (obs_delta - pred_tele_saturated) if pd.notna(pred_tele_saturated) else np.nan,
-                "n_telebirr_links": int(len(tele)),
-                "telebirr_link_targets": tele_targets_str,
-                "n_telebirr_links_all_targets": int(len(tele_all)),
-            }
-        ]
+    plot_heatmap_signed_annotated_to_file(
+        mat_with_event_cols=mat,
+        key_indicators=full_indicators,
+        out_path=str(out_dir / "event_indicator_association_heatmap_signed_full.png"),
+        title="Event–Indicator Association (signed, diverging @0, annotated)",
     )
+
+    # Signed key-indicator heatmap (includes gender gap KPI if present)
+    key_signed = KEY_INDICATORS + ["GAP_ACC_OWNERSHIP_MALE_MINUS_FEMALE_PP"]
+    key_signed = [c for c in key_signed if c in mat.columns]
+
+    plot_heatmap_signed_annotated_to_file(
+        mat_with_event_cols=mat,
+        key_indicators=key_signed,
+        out_path=str(out_dir / "event_indicator_association_heatmap_signed_key.png"),
+        title="Event–Key Indicators (signed, diverging @0, annotated)",
+    )
+
+    # Month-aware effects (tidy)
+    eff = effects_tidy(
+        summary,
+        KEY_INDICATORS,
+        years=FINDEX_YEAR_GRID,
+        default_shape="ramp",
+        default_ramp_years=3.0,
+    )
+    _safe_to_csv(eff, out_dir / "event_effects_tidy.csv")
+
+    # --- Realized-first Telebirr validation (safe if obs missing) ---
+    tele_val = validate_telebirr_mm(
+        df_obs=df_obs,
+        df_links_summary=summary,
+        df_event_effects_tidy=eff,
+        telebirr_event_id="EVT_0001",
+        year_a=2021,
+        year_b=2024,
+        target_indicator="ACC_MM_ACCOUNT",
+        event_regex="telebirr",
+    )
+    _safe_to_csv(tele_val, out_dir / "telebirr_mm_validation.csv")
+
+    # Console diagnostic to make rubric check obvious
+    try:
+        row = tele_val.iloc[0].to_dict() if (tele_val is not None and not tele_val.empty) else {}
+        print(
+            "[task3] telebirr validation:",
+            f"obs_delta_pp={row.get('obs_delta_pp')}",
+            f"pred_used_pp={row.get('pred_used_pp')}",
+            f"pred_source={row.get('pred_source')}",
+            f"residual_pp={row.get('residual_pp')}",
+        )
+    except Exception:
+        pass
+
+
+if __name__ == "__main__":
+    main()
