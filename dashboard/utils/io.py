@@ -22,13 +22,11 @@ def _pick_first_existing(df: pd.DataFrame, candidates: list[str]) -> str | None:
 
 def _detect_year_col(df: pd.DataFrame) -> str | None:
     """Heuristically detect the year column in the dataframe."""
-    # common variants
     candidates = ["year", "Year", "YYYY", "survey_year", "obs_year", "time_year", "date_year"]
     col = _pick_first_existing(df, candidates)
     if col:
         return col
 
-    # heuristic: any column whose name contains 'year'
     for c in df.columns:
         if "year" in c.lower():
             return c
@@ -45,7 +43,6 @@ def _detect_indicator_col(df: pd.DataFrame) -> str | None:
     if col:
         return col
 
-    # heuristic
     for c in df.columns:
         cl = c.lower()
         if "indicator" in cl and ("code" in cl or "id" in cl):
@@ -63,7 +60,6 @@ def _detect_value_col(df: pd.DataFrame) -> str | None:
     if col:
         return col
 
-    # heuristic: pick the first numeric column that isn't obviously an id/year
     numeric_cols = df.select_dtypes(include="number").columns.tolist()
     bad = {"year", "id", "index"}
     for c in numeric_cols:
@@ -115,13 +111,13 @@ def load_top_contributors(repo_root: Path) -> pd.DataFrame:
 
     return df.sort_values(["indicator_code", "effect_pp"], ascending=[True, False]).reset_index(drop=True)
 
+
 def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     """
-    Loads unified enriched dataset and returns standardized long-format observations:
-      year (int)
-      indicator_code (str)
-      value (float)
-      plus some extra columns for filtering (record_type, pillar, unit, gender, location, source_type, confidence).
+    Loads unified enriched dataset and returns standardized long-format observations with:
+      year (int), indicator_code (str), value (float)
+    plus extra columns for filtering when available:
+      record_type, value_type, pillar, unit, gender, location, region, source_type, confidence, etc.
     """
     path = repo_root / "data" / "processed" / "ethiopia_fi_unified_data__enriched.csv"
     raw = _read_csv(path)
@@ -131,7 +127,7 @@ def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     if missing:
         raise ValueError(f"enriched csv missing required columns: {missing}")
 
-    # Prefer fiscal_year if present; else try derive from observation_date
+    # Derive year
     if "fiscal_year" in raw.columns:
         raw["year"] = pd.to_numeric(raw["fiscal_year"], errors="coerce")
     elif "observation_date" in raw.columns:
@@ -141,11 +137,13 @@ def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
 
     raw["value"] = pd.to_numeric(raw["value_numeric"], errors="coerce")
 
-    # Keep observations only (avoid event rows for Trends)
+    # Keep observations only
     df = raw[raw["record_type"].astype(str).str.lower().eq("observation")].copy()
 
+    # Keep filterable metadata if present
     keep_cols = [
         "year", "indicator_code", "value",
+        "record_type", "value_type",
         "indicator", "pillar", "unit", "gender", "location", "region",
         "source_name", "source_type", "confidence"
     ]
@@ -155,5 +153,11 @@ def load_enriched_observations(repo_root: Path) -> pd.DataFrame:
     df = df.dropna(subset=["year", "indicator_code", "value"]).copy()
     df["year"] = df["year"].astype(int)
     df["indicator_code"] = df["indicator_code"].astype(str)
+
+    # Normalize common fields (optional)
+    if "unit" in df.columns:
+        df["unit"] = df["unit"].astype(str)
+    if "value_type" in df.columns:
+        df["value_type"] = df["value_type"].astype(str)
 
     return df.sort_values(["indicator_code", "year"]).reset_index(drop=True)

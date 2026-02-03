@@ -9,7 +9,6 @@ def line_with_ci(df: pd.DataFrame, x: str, y: str, lo: str, hi: str, color: str,
     """Create a line chart with confidence intervals."""
     fig = go.Figure()
 
-    # add each scenario as separate traces with band
     for scn, g in df.groupby(color):
         g = g.sort_values(x)
 

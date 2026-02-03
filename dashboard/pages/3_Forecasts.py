@@ -1,34 +1,47 @@
 """ Forecasts page for visualizing forecasted indicators with confidence intervals, milestones, and top event contributors. """
 import streamlit as st
-from pathlib import Path
 import pandas as pd
+
+import sys
+from pathlib import Path
+
+# Ensure repo root is importable so `import dashboard...` works under `streamlit run`
+ROOT = Path(__file__).resolve().parents[2]
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 
 from dashboard.utils.io import load_forecast_table, load_top_contributors
 from dashboard.utils.charts import line_with_ci, bar_sorted
-
-ROOT = Path(__file__).resolve().parents[2]
 
 st.title("Forecasts (2025–2027)")
 fc = load_forecast_table(ROOT)
 contributors = load_top_contributors(ROOT)
 
+fc["year"] = fc["year"].astype(int)
+
+indicator_codes = sorted(fc["indicator_code"].unique().tolist())
+
 left, right = st.columns([2, 1])
 with left:
-    indicator = st.selectbox(
-        "Indicator",
-        sorted(fc["indicator_code"].unique()),
-        index=sorted(fc["indicator_code"].unique()).index("ACC_OWNERSHIP") if "ACC_OWNERSHIP" in fc["indicator_code"].unique() else 0
-    )
+    default_idx = indicator_codes.index("ACC_OWNERSHIP") if "ACC_OWNERSHIP" in indicator_codes else 0
+    indicator = st.selectbox("Indicator", indicator_codes, index=default_idx)
 with right:
     model = st.selectbox(
         "Model selection",
-        ["Baseline + Event Effects (Task 4)"],  # UI requirement; expandable later
+        ["Baseline + Event Effects (Task 4)"],
         index=0
     )
 
 st.caption("Confidence intervals come from `lo_pp` / `hi_pp` in your Task 4 output.")
 
 plot_df = fc[fc["indicator_code"] == indicator].copy()
+
+# Validate required columns for plotting
+need_cols = {"year", "pred_pp", "lo_pp", "hi_pp", "scenario"}
+missing = [c for c in need_cols if c not in plot_df.columns]
+if missing:
+    st.error(f"Forecast table missing columns needed for chart: {missing}")
+    st.stop()
 
 fig = line_with_ci(
     plot_df,
@@ -41,7 +54,6 @@ fig = line_with_ci(
 )
 st.plotly_chart(fig, use_container_width=True)
 
-# Milestones
 st.subheader("Projected milestones")
 target = st.number_input("Milestone target (%)", min_value=0.0, max_value=100.0, value=60.0, step=1.0)
 
@@ -50,12 +62,14 @@ for scn, g in plot_df.groupby("scenario"):
     g = g.sort_values("year")
     hit = g[g["pred_pp"] >= target]
     hit_year = int(hit["year"].iloc[0]) if not hit.empty else None
+    final_year = int(g["year"].max())
     milestones.append({
         "scenario": scn,
         "first_year_reaching_target": hit_year,
-        "pred_pp_2027": float(g[g["year"] == g["year"].max()]["pred_pp"].iloc[0]),
-        "event_effect_pp_2027": float(g[g["year"] == g["year"].max()]["event_effect_pp"].iloc[0]),
-        "trend_pred_pp_2027": float(g[g["year"] == g["year"].max()]["trend_pred_pp"].iloc[0]),
+        "pred_pp_final": float(g[g["year"] == final_year]["pred_pp"].iloc[0]),
+        "event_effect_pp_final": float(g[g["year"] == final_year]["event_effect_pp"].iloc[0]) if "event_effect_pp" in g.columns else None,
+        "trend_pred_pp_final": float(g[g["year"] == final_year]["trend_pred_pp"].iloc[0]) if "trend_pred_pp" in g.columns else None,
+        "final_year": final_year,
     })
 
 milestones_df = pd.DataFrame(milestones).sort_values("scenario")
@@ -70,6 +84,7 @@ st.download_button(
 
 st.divider()
 st.subheader("Top event contributors (2027)")
+
 c = contributors[contributors["indicator_code"] == indicator].copy()
 if c.empty:
     st.info("No contributor rows found for this indicator in top_event_contributors_2027.csv")
