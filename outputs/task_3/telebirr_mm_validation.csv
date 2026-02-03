@@ -1,2 +1,2 @@
-indicator_code,obs_year_a,obs_year_b,obs_a,obs_b,obs_delta_pp,pred_telebirr_saturated_pp,pred_telebirr_realized_pp,pred_used_pp,pred_source,tidy_realized_match_mode,residual_pp,n_telebirr_links,telebirr_link_targets,n_telebirr_links_all_targets,telebirr_event_id
-ACC_MM_ACCOUNT,2021,2024,4.7,9.45,4.749999999999999,5.516,4.749888888888889,4.749888888888889,tidy_realized,by_event_id,0.00011111111111006267,1,"ACC_MM_ACCOUNT, ACC_OWNERSHIP, USG_P2P_COUNT, USG_TELEBIRR_USERS",4,EVT_0001
+observed_delta_pp,predicted_delta_pp,residual_pp
+4.749999999999999,4.749888888888889,-0.00011111111111006267

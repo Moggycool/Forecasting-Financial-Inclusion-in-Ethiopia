@@ -1,4 +1,18 @@
-"""Functions for computing event effects on financial indicators."""
+"""Functions for computing event effects on financial inclusion indicators.
+
+Implements month-aware lag and (by default) linear ramp diffusion across the FINDEX year grid.
+
+Key ideas
+---------
+- Each impact link has a total magnitude in percentage points (pp): `impact_magnitude_pp`.
+- Each link can have a lag in months (`lag_months`).
+- Effects can be represented as:
+    - step: 0 until lag is complete, then full magnitude
+    - ramp: 0 until lag is complete, then linearly ramps to full magnitude over `ramp_years`
+
+This module is intentionally deterministic and audit-friendly.
+"""
+
 from __future__ import annotations
 
 from typing import Sequence
@@ -21,22 +35,39 @@ def _month_index(ts: pd.Timestamp) -> float:
     return float(ts.year) * 12.0 + float(ts.month - 1)
 
 
-def _year_month_index(year: int) -> float:
-    """Month index for a Findex snapshot year, assuming snapshot at year-end (Dec).
+def _year_month_index(year: int, snapshot_month: int = 12) -> float:
+    """Month index for a snapshot year (month-aware arithmetic).
 
-    This choice makes a 12-month lag from May-2021 start effectively from May-2022,
-    and by Dec-2024 you realize ~31/36 of a 3-year ramp.
-    If you prefer mid-year snapshots, change month here.
+    Parameters
+    ----------
+    year:
+        Snapshot year.
+    snapshot_month:
+        Month of within-year snapshot (default=12 / Dec).
+
+    Notes
+    -----
+    Using Dec makes a 12-month lag from May-2021 start effectively from May-2022,
+    and by Dec-2024 you realize ~31/36 of a 3-year ramp (if ramp_years=3).
     """
-    return float(year) * 12.0 + 11.0  # Dec
+    m = int(snapshot_month)
+    if not (1 <= m <= 12):
+        raise ValueError("snapshot_month must be in 1..12")
+    return float(year) * 12.0 + float(m - 1)
 
 
-def effect_step_month_aware(t_year: int, event_ts: pd.Timestamp, lag_months: float, mag_pp: float) -> float:
+def effect_step_month_aware(
+    t_year: int,
+    event_ts: pd.Timestamp,
+    lag_months: float,
+    mag_pp: float,
+    snapshot_month: int = 12,
+) -> float:
     """Step effect with month-aware lag."""
     if pd.isna(event_ts) or pd.isna(mag_pp):
         return 0.0
     start_m = _month_index(event_ts) + float(lag_months)
-    t_m = _year_month_index(int(t_year))
+    t_m = _year_month_index(int(t_year), snapshot_month=snapshot_month)
     return float(mag_pp) if (t_m >= start_m) else 0.0
 
 
@@ -46,13 +77,14 @@ def effect_ramp_month_aware(
     lag_months: float,
     ramp_months: float,
     mag_pp: float,
+    snapshot_month: int = 12,
 ) -> float:
     """Ramp effect with month-aware lag and ramp duration."""
     if pd.isna(event_ts) or pd.isna(mag_pp):
         return 0.0
 
     start_m = _month_index(event_ts) + float(lag_months)
-    t_m = _year_month_index(int(t_year))
+    t_m = _year_month_index(int(t_year), snapshot_month=snapshot_month)
 
     if t_m < start_m:
         return 0.0
@@ -69,15 +101,20 @@ def compute_effect_series(
     years: Sequence[int] | None = None,
     shape: str | None = None,
     ramp_years: float | None = None,
+    snapshot_month: int = 12,
 ) -> pd.Series:
     """Compute effect series for a single impact link row.
 
-    Notes
-    -----
-    - Uses month-aware lag and ramp so 12-month lag behaves correctly.
-    - Allows per-link overrides if columns exist:
-        - effect_shape / shape
-        - ramp_years
+    Required columns (expected)
+    ---------------------------
+    - event_date
+    - lag_months
+    - impact_magnitude_pp
+
+    Optional per-link overrides
+    ---------------------------
+    - effect_shape / shape: "ramp" (default) or "step"
+    - ramp_years: float
     """
     years_list = list(years) if years is not None else FINDEX_YEAR_GRID
     year_index = pd.Index(years_list, dtype="int64")
@@ -96,8 +133,9 @@ def compute_effect_series(
 
     # Shape: prefer per-row if available
     row_shape = link_row.get("effect_shape", link_row.get("shape", None))
-    use_shape = (str(row_shape).strip().lower() if row_shape is not None and str(row_shape).strip() else None) or (
-        str(shape).strip().lower() if shape is not None else "ramp"
+    use_shape = (
+        (str(row_shape).strip().lower() if row_shape is not None and str(row_shape).strip() else None)
+        or (str(shape).strip().lower() if shape is not None else "ramp")
     )
 
     # Ramp duration: prefer per-row if available
@@ -109,9 +147,18 @@ def compute_effect_series(
     vals: list[float] = []
     for y in years_list:
         if use_shape == "step":
-            vals.append(effect_step_month_aware(int(y), event_ts, lag_months, mag_pp))
+            vals.append(effect_step_month_aware(int(y), event_ts, lag_months, mag_pp, snapshot_month=snapshot_month))
         else:
-            vals.append(effect_ramp_month_aware(int(y), event_ts, lag_months, ramp_months, mag_pp))
+            vals.append(
+                effect_ramp_month_aware(
+                    int(y),
+                    event_ts,
+                    lag_months,
+                    ramp_months,
+                    mag_pp,
+                    snapshot_month=snapshot_month,
+                )
+            )
 
     return pd.Series(vals, index=year_index, dtype="float64")
 
@@ -122,10 +169,33 @@ def effects_tidy(
     years: Sequence[int] | None = None,
     default_shape: str = "ramp",
     default_ramp_years: float = 3.0,
+    snapshot_month: int = 12,
 ) -> pd.DataFrame:
-    """Compute tidy effects DataFrame from summary links DataFrame."""
+    """Compute tidy effects DataFrame from summary links DataFrame.
+
+    Output columns match your existing export:
+    event_record_id,event_name,indicator_code,year,effect_pp,shape,ramp_years,lag_months,
+    impact_magnitude_pp,event_date,link_record_id
+    """
     years_list = list(years) if years is not None else FINDEX_YEAR_GRID
     ind_set = set(indicators) if indicators is not None else None
+
+    if df_summary is None or df_summary.empty:
+        return pd.DataFrame(
+            columns=[
+                "event_record_id",
+                "event_name",
+                "indicator_code",
+                "year",
+                "effect_pp",
+                "shape",
+                "ramp_years",
+                "lag_months",
+                "impact_magnitude_pp",
+                "event_date",
+                "link_record_id",
+            ]
+        )
 
     rows: list[dict[str, object]] = []
     for _, r in df_summary.iterrows():
@@ -138,6 +208,7 @@ def effects_tidy(
             years=years_list,
             shape=default_shape,
             ramp_years=default_ramp_years,
+            snapshot_month=snapshot_month,
         )
 
         for y in years_list:
@@ -151,7 +222,7 @@ def effects_tidy(
                     "shape": r.get("effect_shape", default_shape),
                     "ramp_years": r.get("ramp_years", default_ramp_years),
                     "lag_months": r.get("lag_months"),
-                    # useful for debugging
+                    # useful for debugging/audit
                     "impact_magnitude_pp": r.get("impact_magnitude_pp"),
                     "event_date": r.get("event_date"),
                     "link_record_id": r.get("link_record_id", r.get("record_id")),

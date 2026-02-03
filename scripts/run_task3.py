@@ -4,7 +4,6 @@ from __future__ import annotations
 import sys
 from pathlib import Path
 
-import numpy as np
 import pandas as pd
 
 # Get project root (must run before importing from src.* when executing as a script)
@@ -12,14 +11,22 @@ _ROOT = Path(__file__).resolve().parents[1]
 if str(_ROOT) not in sys.path:
     sys.path.insert(0, str(_ROOT))
 
-from src.fi.association_matrix import build_association_matrix, plot_heatmap
-from src.fi.data_io import coerce_datetime, load_csv
-from src.fi.event_effects import FINDEX_YEAR_GRID, effects_tidy
-from src.fi.impact_links import build_impact_links_summary, join_links_events
-from src.fi.task3_validation import validate_telebirr_mm  # <-- updated realized-first validator
+from src.fi.association_matrix import (  # noqa: E402
+    build_association_matrix,
+    plot_heatmap_basic_to_file,
+    plot_heatmap_signed_annotated_to_file,
+)
+from src.fi.data_io import coerce_datetime, load_csv  # noqa: E402
+from src.fi.event_effects import FINDEX_YEAR_GRID, effects_tidy  # noqa: E402
+from src.fi.impact_links import build_impact_links_summary, join_links_events  # noqa: E402
+from src.fi.task3_validation import validate_telebirr_mm  # noqa: E402
 
 
+# Keep existing KPI list used for the *matrix build* and effects.
 KEY_INDICATORS = ["ACC_OWNERSHIP", "ACC_MM_ACCOUNT", "USG_DIGITAL_PAYMENT"]
+
+# This is the *extra* KPI for the focused signed heatmap only.
+KEY_HEATMAP_EXTRA = ["GAP_ACC_OWNERSHIP_MALE_MINUS_FEMALE_PP"]
 
 
 def _norm_str(s: pd.Series) -> pd.Series:
@@ -108,9 +115,40 @@ def main() -> None:
     summary = build_impact_links_summary(joined)
     _safe_to_csv(summary, out_dir / "impact_links_summary.csv")
 
+    # --- Association matrix CSV (same output file name as before) ---
     mat = build_association_matrix(summary, KEY_INDICATORS)
     _safe_to_csv(mat, out_dir / "event_indicator_association_matrix.csv")
-    plot_heatmap(mat, KEY_INDICATORS, str(out_dir / "event_indicator_association_heatmap.png"))
+
+    # --- Heatmaps (basic + improved signed) ---
+    # Basic heatmap (keeps your existing artifact name)
+    plot_heatmap_basic_to_file(
+       mat=mat,
+       key_indicators=KEY_INDICATORS,
+       out_path=str(out_dir / "event_indicator_association_heatmap.png"),
+    )
+
+    # Signed full heatmap: use all indicator columns present in `mat`
+    # (excluding event metadata). This gives you the "full signed matrix" view.
+    meta_cols = ["event_record_id", "event_name", "event_category", "event_date"]
+    full_indicators = [c for c in mat.columns if c not in meta_cols]
+
+    plot_heatmap_signed_annotated_to_file(
+        mat_with_event_cols=mat,
+        key_indicators=full_indicators,
+        out_path=str(out_dir / "event_indicator_association_heatmap_signed_full.png"),
+        title="Event–Indicator Association (signed, diverging @0, annotated)",
+    )
+
+    # Signed key-indicator heatmap (includes gender gap KPI if present)
+    key_signed = KEY_INDICATORS + ["GAP_ACC_OWNERSHIP_MALE_MINUS_FEMALE_PP"]
+    key_signed = [c for c in key_signed if c in mat.columns]
+
+    plot_heatmap_signed_annotated_to_file(
+        mat_with_event_cols=mat,
+        key_indicators=key_signed,
+        out_path=str(out_dir / "event_indicator_association_heatmap_signed_key.png"),
+        title="Event–Key Indicators (signed, diverging @0, annotated)",
+    )
 
     # Month-aware effects (tidy)
     eff = effects_tidy(
@@ -123,7 +161,6 @@ def main() -> None:
     _safe_to_csv(eff, out_dir / "event_effects_tidy.csv")
 
     # --- Realized-first Telebirr validation (safe if obs missing) ---
-    # Default Telebirr event id can be overridden if your pipeline uses a different id.
     tele_val = validate_telebirr_mm(
         df_obs=df_obs,
         df_links_summary=summary,

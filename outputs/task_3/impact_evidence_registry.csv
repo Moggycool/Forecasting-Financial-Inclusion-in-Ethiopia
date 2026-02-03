@@ -1,0 +1,16 @@
+link_record_id,event_record_id,event_name,indicator_code,impact_magnitude_pp,lag_months,effect_shape,ramp_years,evidence_basis,confidence_link,event_source_name,event_confidence,impact_magnitude_source
+IMP_0001,EVT_0001,Telebirr Launch,ACC_OWNERSHIP,15.0,12.0,,,literature,medium,Ethio Telecom,high,impact_estimate
+IMP_0002,EVT_0001,Telebirr Launch,USG_TELEBIRR_USERS,,3.0,,,empirical,high,Ethio Telecom,high,
+IMP_0003,EVT_0001,Telebirr Launch,USG_P2P_COUNT,25.0,6.0,,,empirical,medium,Ethio Telecom,high,impact_estimate
+IMP_0004,EVT_0002,Safaricom Ethiopia Commercial Launch,ACC_4G_COV,15.0,12.0,,,empirical,medium,News,high,impact_estimate
+IMP_0005,EVT_0002,Safaricom Ethiopia Commercial Launch,AFF_DATA_INCOME,20.0,12.0,,,literature,medium,News,high,impact_estimate
+IMP_0006,EVT_0003,M-Pesa Ethiopia Launch,USG_MPESA_USERS,,3.0,,,empirical,high,Safaricom,high,
+IMP_0007,EVT_0003,M-Pesa Ethiopia Launch,ACC_MM_ACCOUNT,5.0,6.0,,,theoretical,medium,Safaricom,high,impact_estimate
+IMP_0008,EVT_0004,Fayda Digital ID Program Rollout,ACC_OWNERSHIP,10.0,24.0,,,literature,medium,NIDP,high,impact_estimate
+IMP_0009,EVT_0004,Fayda Digital ID Program Rollout,GEN_GAP_ACC,5.0,24.0,,,literature,medium,NIDP,high,impact_estimate
+IMP_0010,EVT_0005,Foreign Exchange Liberalization,AFF_DATA_INCOME,30.0,3.0,,,empirical,high,NBE,high,impact_estimate
+IMP_0011,EVT_0007,M-Pesa EthSwitch Integration,USG_MPESA_ACTIVE,15.0,3.0,,,literature,medium,EthSwitch,high,impact_estimate
+IMP_0012,EVT_0007,M-Pesa EthSwitch Integration,USG_P2P_COUNT,10.0,3.0,,,literature,medium,EthSwitch,high,impact_estimate
+IMP_0013,EVT_0008,EthioPay Instant Payment System Launch,USG_P2P_COUNT,15.0,6.0,,,literature,medium,NBE/EthSwitch,high,impact_estimate
+IMP_0014,EVT_0010,Safaricom Ethiopia Price Increase,AFF_DATA_INCOME,10.0,1.0,,,empirical,high,News,high,impact_estimate
+IMP_0015,EVT_0001,Telebirr Launch,ACC_MM_ACCOUNT,5.516,12.0,,,theoretical,medium,Ethio Telecom,high,impact_magnitude

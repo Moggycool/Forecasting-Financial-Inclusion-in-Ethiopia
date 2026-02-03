@@ -1,4 +1,4 @@
-event_record_id,event_name,event_category,event_date,ACC_OWNERSHIP,ACC_MM_ACCOUNT,USG_DIGITAL_PAYMENT
-EVT_0001,Telebirr Launch,product_launch,2021-05-17,15.0,5.516,0.0
-EVT_0003,M-Pesa Ethiopia Launch,product_launch,2023-08-01,0.0,5.0,0.0
-EVT_0004,Fayda Digital ID Program Rollout,infrastructure,2024-01-01,10.0,0.0,0.0
+event_name,ACC_OWNERSHIP,ACC_MM_ACCOUNT,USG_DIGITAL_PAYMENT
+Telebirr Launch,15.0,5.516,0.0
+M-Pesa Ethiopia Launch,0.0,5.0,0.0
+Fayda Digital ID Program Rollout,10.0,0.0,0.0
